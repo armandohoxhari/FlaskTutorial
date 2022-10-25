@@ -23,7 +23,7 @@ posts = [
         ]
 app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_PASSWORD'] = ''
-app.config['MYSQL_DATABASE_DB'] = 'example'
+app.config['MYSQL_DATABASE_DB'] = 'feed_me'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
@@ -39,10 +39,40 @@ def home():
 def random():
     con = mysql.connect()
     cur = con.cursor()
-    cur.execute('SELECT * FROM user ORDER BY RAND() LIMIT 1')
+    cur.execute('SELECT name FROM recipes ORDER BY RAND() LIMIT 1')
     data = cur.fetchall()
-    return render_template('random.html', data=data)
+    cur.execute('SELECT name,price FROM ingredients WHERE ingredient_id IN '
+                '(SELECT ingredient_id FROM relations WHERE recipe_id ='
+                '(SELECT recipe_id FROM recipes WHERE name = %s))', data)
+    ing = cur.fetchall()
+    return render_template('random.html', data=data, ing=ing)
+    con.close()
 
+@app.route("/veggie")
+def veggie():
+    con = mysql.connect()
+    cur = con.cursor()
+    cur.execute('SELECT name FROM recipes WHERE category= "Vegeterian" ORDER BY RAND() LIMIT 1')
+    data = cur.fetchall()
+    cur.execute('SELECT name,price FROM ingredients WHERE ingredient_id IN '
+                '(SELECT ingredient_id FROM relations WHERE recipe_id ='
+                '(SELECT recipe_id FROM recipes WHERE name = %s))', data)
+    ing = cur.fetchall()
+    return render_template('random.html', data=data, ing=ing)
+    con.close()
+
+@app.route("/non_veggie")
+def non_veggie():
+    con = mysql.connect()
+    cur = con.cursor()
+    cur.execute('SELECT name FROM recipes WHERE category = "Non-Vegeterian" ORDER BY RAND() LIMIT 1')
+    data = cur.fetchall()
+    cur.execute('SELECT name,price FROM ingredients WHERE ingredient_id IN '
+                '(SELECT ingredient_id FROM relations WHERE recipe_id ='
+                '(SELECT recipe_id FROM recipes WHERE name = %s))', data)
+    ing = cur.fetchall()
+    return render_template('random.html', data=data, ing=ing)
+    con.close()
 @app.route("/about")
 def about():
 
